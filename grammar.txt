@@ -1,0 +1,9 @@
+Exp     ->  term (oder term)*
+
+Term    -> Faktor  (und Faktor)*
+
+Faktor  -> "True" | "False" 
+
+Faktor  ->  "! Faktor"
+
+Faktor  ->  "("   exp  ")"
