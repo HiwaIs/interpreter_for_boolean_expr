@@ -24,7 +24,7 @@ TT_EOF = 'EOF'
 hashmap = HashMap()
 
 hashmap.put('TRUE', TT_TRUE)
-hashmap.put('FALSE', TT_TRUE)
+hashmap.put('FALSE', TT_FALSE)
 hashmap.put('AND', TT_AND)
 hashmap.put('OR', TT_OR)
 hashmap.put('(', TT_LK)
