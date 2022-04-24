@@ -20,21 +20,6 @@ class TestBooInterpreter(unittest.TestCase):
 
         return self
 
-
-    def test_tokenlist(self):
-        # enter manually
-        self.text = "true and false"
-        self.expected_list = ['true', 'and', 'false']
-        # add last token 'EOF'
-        self.expected_list.append('eof')
-
-        self.lexer = Lexer('stdin', self.text)
-        self.tokens, self.error = self.lexer.make_tokens()
-        self.convert_tokens(self.tokens)
-
-        
-        self.assertEqual(self.tokens, self.expected_list) 
-
     # convert intern bool into py bool
     def convert_bool(self):
         if self.result.value == 'TRUE':
@@ -61,6 +46,21 @@ class TestBooInterpreter(unittest.TestCase):
                 list_of_tokens[i] = ')'
             elif list_of_tokens[i].type == TT_EOF:
                 list_of_tokens[i] = 'eof'
+
+    def test_tokenlist(self):
+        # enter manually
+        self.text = "true and false"
+        self.expected_list = ['true', 'and', 'false']
+        # add last token 'EOF'
+        self.expected_list.append('eof')
+
+        self.lexer = Lexer('stdin', self.text)
+        self.tokens, self.error = self.lexer.make_tokens()
+        self.convert_tokens(self.tokens)
+
+        
+        self.assertEqual(self.tokens, self.expected_list) 
+
 
     def test_expressions(self):
         self.set_up("(!true and false or true and true or false and (true and false))")
@@ -108,9 +108,6 @@ class TestBooInterpreter(unittest.TestCase):
             # case 4
             else:
                 self.assertTrue(self.result)
-
-
-
 
 if __name__ == '__main__':
     unittest.main()
