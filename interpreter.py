@@ -184,9 +184,18 @@ class Lexer:
             elif self.current_char == ')':
                 tokens.append(Token(TT_RK, pos_start=self.pos))
                 self.advance()
-            elif self.current_char == '!':
+            elif self.current_char == '!' and self.peek_next() != '=':
                 tokens.append(Token(TT_NEG, pos_start=self.pos))
                 self.advance()
+            elif self.current_char == '!' and self.peek_next() == '=':
+                token, error = self.make_not_equals()
+                if error:
+                    return [], error
+                tokens.append(token)
+            elif self.current_char == '=':
+                token, error = self.make_equals()
+                if error:
+                    return [], error
             else:
                 if self.current_char in LETTERS:
                     tokens.append(self.make_word())
@@ -233,6 +242,28 @@ class Lexer:
             return Token(TT_INT, int(num_str), pos_start, self.pos)
         else:
             return Token(TT_FLOAT, float(num_str), pos_start, self.pos)
+
+    def make_not_equals(self):
+        pos_start = self.pos.copy()
+        self.advance()
+
+        if self.current_char == '=':
+            self.advance()
+            return Token(TT_NE, pos_start=pos_start, pos_end=self.pos), None
+
+        self.advance()
+        return None, ExpectedCharError(pos_start, self.pos, "'=' (after '!')")
+
+    def make_equals(self):
+        tok_type = TT_EQ
+        pos_start = self.pos.copy()
+        self.advance()
+
+        if self.current_char == '=':
+            self.advance()
+            tok_type = TT_EE
+
+        return Token(tok_type, pos_start=pos_start, pos_end=self.pos)
 
     def is_token_type(self, word):
         tokentype = keyword.get(word)

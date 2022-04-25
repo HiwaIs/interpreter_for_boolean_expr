@@ -24,19 +24,20 @@ class TestBooInterpreter(unittest.TestCase):
     def convert_bool(self):
         if self.result.value == 'TRUE':
             self.result = True
-        else: self.result = False
+        else:
+            self.result = False
         return self.result
 
     # convert token into strings
     def convert_tokens(self, list_of_tokens):
         for i in range(len(list_of_tokens)):
-            if list_of_tokens[i].type == TT_TRUE:
+            if list_of_tokens[i].value == 'TRUE':
                 list_of_tokens[i] = 'true'
-            elif list_of_tokens[i].type == TT_FALSE:
+            elif list_of_tokens[i].value == 'FALSE':
                 list_of_tokens[i] = 'false'
-            elif list_of_tokens[i].type == TT_AND:
+            elif list_of_tokens[i].value == 'AND':
                 list_of_tokens[i] = 'and'
-            elif list_of_tokens[i].type == TT_OR:
+            elif list_of_tokens[i].value == 'OR':
                 list_of_tokens[i] = 'or'
             elif list_of_tokens[i].type == TT_NEG:
                 list_of_tokens[i] = '!'
@@ -58,17 +59,16 @@ class TestBooInterpreter(unittest.TestCase):
         self.tokens, self.error = self.lexer.make_tokens()
         self.convert_tokens(self.tokens)
 
-        
-        self.assertEqual(self.tokens, self.expected_list) 
-
+        self.assertEqual(self.tokens, self.expected_list)
 
     def test_expressions(self):
-        self.set_up("(!true and false or true and true or false and (true and false))")
+        self.set_up(
+            "(!true and false or true and true or false and (true and false))")
 
         # convert intern bool into py bool
         self.result = self.convert_bool()
-     
-        self.assertEqual(True, self.result)
+
+        self.assertEqual(False, self.result)
 
     def test_negation(self):
         neg_expr = "!!!true"
@@ -84,10 +84,10 @@ class TestBooInterpreter(unittest.TestCase):
                 break
             else:
                 neg_counter += 1
-        
+
         # convert intern bool into py bool
         self.result = self.convert_bool()
-        
+
         # Four cases:
         # True gets negated with even numbers of negations
         # True gets negated with uneven numbers of negations
@@ -104,14 +104,14 @@ class TestBooInterpreter(unittest.TestCase):
         else:
             # case 3
             if neg_counter % 2 == 0:
-               self.assertFalse(self.result)
+                self.assertFalse(self.result)
             # case 4
             else:
                 self.assertTrue(self.result)
 
+
 if __name__ == '__main__':
     unittest.main()
-
 
 
 # def setup
@@ -122,7 +122,7 @@ if __name__ == '__main__':
 
 # iein test für den interpreter noch'
 
-# ausdrücke testen 
+# ausdrücke testen
 # neg testen (sehr lang)
 
 # neuer datetyp

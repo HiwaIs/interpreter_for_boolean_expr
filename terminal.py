@@ -1,6 +1,7 @@
 import interpreter
 
 
+
 while True:
     text = input('boo > ')
     result, error = interpreter.run('<stdin>',text)
