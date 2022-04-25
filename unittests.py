@@ -125,5 +125,4 @@ if __name__ == '__main__':
 # ausdrücke testen 
 # neg testen (sehr lang)
 
-
 # neuer datetyp

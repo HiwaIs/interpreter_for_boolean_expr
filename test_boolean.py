@@ -2,8 +2,9 @@
 # from doctest import ELLIPSIS_MARKER
 # from operator import truediv
 
-from interpreter import *
 
+
+TT_BOOL = 'true'+'false'
 # LETTERS = ['a','n','d', 'o', 'r', 't', 'e', 'u', 'f', 'l', 's']
 
 # class Node:
@@ -77,30 +78,31 @@ from interpreter import *
 
 
 
-string = "haha"
-print(len(string))
-for char in range(len(string)):
-    print(string[char])
+# string = "haha"
+# print(len(string))
+# for char in range(len(string)):
+#     print(string[char])
+# zahl = 4
 
-zahl = 4
-
-if zahl % 2 == 0:
-    print("gerade")
-
-
-bool_list = [True, False]
+# if zahl % 2 == 0:
+#     print("gerade")
 
 
-print(str(bool_list))
+# bool_list = [True, False]
 
-i = Token(TT_TRUE)
 
-print(i.type)
+# print(str(bool_list))
 
-text = "true and false"
-expected_list = ['true', 'and', 'false']
-for i in range(len(expected_list)):
-    expected_list[i] = expected_list[i].upper()
+# i = Token(TT_TRUE)
 
-luste = [Token(TT_TRUE), Token(TT_AND), Token(TT_FALSE)]
-print(luste[1].type)
+# print(i.type)
+
+# text = "true and false"
+# expected_list = ['true', 'and', 'false']
+# for i in range(len(expected_list)):
+#     expected_list[i] = expected_list[i].upper()
+
+# luste = [Token(TT_TRUE), Token(TT_AND), Token(TT_FALSE)]
+# print(luste[1].type)
+
+print(TT_BOOL)

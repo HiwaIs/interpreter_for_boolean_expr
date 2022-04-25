@@ -1,9 +1,16 @@
-Exp     ->  term (oder term)*
+Exp             ->  term (oder term)*
+                ->  KEYWORD: VAR IDENTIFIER EQ expr
 
-Term    -> Faktor  (und Faktor)*
+Term            -> Faktor  (und Faktor)*
 
-Faktor  -> "True" | "False" 
+Faktor          -> "True" | "False" 
 
-Faktor  ->  "! Faktor"
+Faktor          ->  ! "(" Faktor ")"
 
-Faktor  ->  "("   exp  ")"
+Faktor          ->  "("   exp  ")"
+
+Faktor          -> number operator number
+
+operator        -> ==|>=|<=|>|<|!=
+
+number          -> INT|FLOAT
