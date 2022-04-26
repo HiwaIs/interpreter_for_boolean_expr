@@ -26,3 +26,5 @@ comparsion      -> unary ((>=|<=|>|<) unary)*
 unary           -> "!" unary | primary
 primary         -> NUMBER | "true" | "false" | '(' expr ')'
 
+
+Test wegen Uni
