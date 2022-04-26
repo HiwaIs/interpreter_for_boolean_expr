@@ -3,7 +3,6 @@
 # from operator import truediv
 
 
-
 TT_BOOL = 'true'+'false'
 # LETTERS = ['a','n','d', 'o', 'r', 't', 'e', 'u', 'f', 'l', 's']
 
@@ -54,16 +53,13 @@ TT_BOOL = 'true'+'false'
 # po = hm.get("tut")
 
 
-
 # word = 'true'
 
 # word = word.upper()
 
 
-
 # b = 5
 # a = 3 if b > 4 else print("s")
-
 
 
 # z = True
@@ -73,9 +69,6 @@ TT_BOOL = 'true'+'false'
 # print(x)
 
 # print(type(z))
-
-
-
 
 
 # string = "haha"
@@ -105,4 +98,7 @@ TT_BOOL = 'true'+'false'
 # luste = [Token(TT_TRUE), Token(TT_AND), Token(TT_FALSE)]
 # print(luste[1].type)
 
-print(TT_BOOL)
+
+print(2 < 4 > 3)
+print(2 < 3 == 5 < 2)
+True == True

@@ -5,7 +5,7 @@ Term            -> Faktor  (und Faktor)*
 
 Faktor          -> "True" | "False" 
 
-Faktor          ->  ! "(" Faktor ")"
+Faktor          ->  !  | Faktor 
 
 Faktor          ->  "("   exp  ")"
 
@@ -14,3 +14,15 @@ Faktor          -> number operator number
 operator        -> ==|>=|<=|>|<|!=
 
 number          -> INT|FLOAT
+                -> "("   exp  ")"
+
+
+
+
+expr            -> Term (or Term)*
+Term            -> comparsion (und comparsion)*
+Equality        -> == | !=
+comparsion      -> unary ((>=|<=|>|<) unary)*
+unary           -> "!" unary | primary
+primary         -> NUMBER | "true" | "false" | '(' expr ')'
+

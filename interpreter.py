@@ -26,7 +26,6 @@ TT_LTE = 'LTE'
 TT_GTE = 'GTE'
 TT_EOF = 'EOF'
 
-TT_EOF = 'EOF'
 
 keyword = HashMap()
 
@@ -193,9 +192,11 @@ class Lexer:
                     return [], error
                 tokens.append(token)
             elif self.current_char == '=':
-                token, error = self.make_equals()
-                if error:
-                    return [], error
+                tokens.append(self.make_equals())
+            elif self.current_char == '<':
+                tokens.append(self.make_less_than())
+            elif self.current_char == '>':
+                tokens.append(self.make_greater_than())
             else:
                 if self.current_char in LETTERS:
                     tokens.append(self.make_word())
@@ -265,6 +266,28 @@ class Lexer:
 
         return Token(tok_type, pos_start=pos_start, pos_end=self.pos)
 
+    def make_less_than(self):
+        tok_type = TT_LT
+        pos_start = self.pos.copy()
+        self.advance()
+
+        if self.current_char == '=':
+            self.advance()
+            tok_type = TT_LTE
+
+        return Token(tok_type, pos_start=pos_start, pos_end=self.pos)
+
+    def make_greater_than(self):
+        tok_type = TT_GT
+        pos_start = self.pos.copy()
+        self.advance()
+
+        if self.current_char == '=':
+            self.advance()
+            tok_type = TT_GTE
+
+        return Token(tok_type, pos_start=pos_start, pos_end=self.pos)
+
     def is_token_type(self, word):
         tokentype = keyword.get(word)
         if tokentype == None:
@@ -294,6 +317,17 @@ class Lexer:
 ##########################
 
 
+class NumberNode:
+    def __init__(self, tok):
+        self.tok = tok
+
+        self.pos_start = self.tok.pos_start
+        self.pos_end = self.tok.pos_end
+
+    def __repr__(self):
+        return f'{self.tok}'
+
+
 class BooleanNode:
     def __init__(self, tok):
         self.tok = tok
@@ -306,7 +340,7 @@ class BooleanNode:
 
 
 class BinOpNode:
-    def __init__(self, left_node: BooleanNode, op_tok, right_node: BooleanNode):
+    def __init__(self, left_node, op_tok, right_node):
         self.left_node = left_node
         self.op_tok = op_tok
         self.right_node = right_node
@@ -408,7 +442,7 @@ class Parser:
                     self.current_tok.pos_start, self.current_tok.pos_end,
                     "Expected ')'"
                 ))
-
+# elif nach ! darf kein int kommen
         return res.failure(InvalidSyntaxError(
             tok.pos_start, tok.pos_end,
             "Expected 'true' or 'false'"
@@ -418,7 +452,7 @@ class Parser:
         return self.bin_op(self.factor, keyword.get('AND'))
 
     def expr(self):
-        return self.bin_op(self.term, keyword.get('AND'))
+        return self.bin_op(self.term, keyword.get('OR'))
 
     def bin_op(self, func, op):
         res = ParseResult()
