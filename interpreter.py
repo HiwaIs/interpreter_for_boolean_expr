@@ -424,6 +424,7 @@ class Parser:
 # !!!!!true and false
 # 11231232123 > 2
 
+
     def equality(self):
         return self.bin_op(self.comparsion, (TT_EE, TT_NE))
 
@@ -467,6 +468,11 @@ class Parser:
             return res.success(NumberNode(tok))
 
         elif tok.type == TT_LK:
+            if self.peek_prev().type == '!':
+                return res.failure(InvalidSyntaxError(
+                    self.current_tok.pos_start, self.current_tok.pos_end,
+                    "Expected 'true' or 'false' after '!'"
+                ))
             res.register(self.advance())
             expr = res.register(self.expr())
             if res.error:
