@@ -3,6 +3,7 @@
 # POSSIBLE TOKENS
 ##########################
 
+from urllib.request import HTTPBasicAuthHandler
 from hashmap import HashMap
 from string_with_arrows import *
 from keyword import *
@@ -17,13 +18,13 @@ TT_RK = ')'
 TT_NEG = '!'
 TT_INT = 'INT'
 TT_FLOAT = 'FLOAT'
-TT_EQ = 'EQ'
-TT_EE = 'EE'
-TT_NE = 'NE'
-TT_LT = 'LT'
-TT_GT = 'GT'
-TT_LTE = 'LTE'
-TT_GTE = 'GTE'
+TT_EQ = '='
+TT_EE = '=='
+TT_NE = '!='
+TT_LT = '<'
+TT_GT = '>'
+TT_LTE = '<='
+TT_GTE = '>='
 TT_EOF = 'EOF'
 
 
@@ -424,7 +425,6 @@ class Parser:
 # !!!!!true and false
 # 11231232123 > 2
 
-
     def equality(self):
         return self.bin_op(self.comparsion, (TT_EE, TT_NE))
 
@@ -518,27 +518,56 @@ class Parser:
 # VALUES
 ##########################
 
+
+class RTResult:
+    def __init__(self):
+        self.error = None
+        self.value = None
+
+    def register(self, res):
+        if res.error:
+            self.error = res.error
+        return res.value
+
+    def success(self, value):
+        self.value = value
+        return self
+
+    def failure(self, error):
+        self.error = error
+        return self
+
+##########################
+# VALUES
+##########################
+
+
 class Booleen:
     def __init__(self, value):
         self.value = value
+        self.set_pos()
 
     def set_pos(self, pos_start=None, pos_end=None):
         self.pos_start = pos_start
         self.pos_end = pos_end
         return self
 
+    def set_context(self, context=None):
+        self.context = context
+        return self
+
     def and_to(self, other):
         if isinstance(other, Booleen):
             if self.value == other.value:
-                return Booleen(self.value)
-            return Booleen('FALSE')
+                return Booleen(self.value).set_context(self.context), None
+            return Booleen('FALSE').set_context(self.context), None
 
     def or_to(self, other):
         if isinstance(other, Booleen):
             if self.value == 'FALSE' and other.value == 'FALSE':
-                return Booleen(self.value)
+                return Booleen(self.value).set_context(self.context), None
             else:
-                return Booleen('TRUE')
+                return Booleen('TRUE').set_context(self.context), None
 
     def reverse(self):
         if self.value == 'TRUE':
@@ -546,10 +575,84 @@ class Booleen:
         elif self.value == 'FALSE':
             self.value = 'TRUE'
 
-        return Booleen(self.value)
+        return Booleen(self.value).set_context(self.context), None
+
+    def not_equal(self, other):
+        if self.value != other.value:
+            return Booleen('TRUE').set_context(self.context), None
+        else:
+            return Booleen('FALSE').set_context(self.context), None
+
+    def double_equal(self, other):
+        if self.value == other.value:
+            return Booleen('TRUE').set_context(self.context), None
+        else:
+            return Booleen('FALSE').set_context(self.context), None
 
     def __repr__(self):
         return str(self.value)
+
+
+class Number:
+    def __init__(self, value):
+        self.value = value
+        self.set_pos()
+        self.set_context()
+
+    def set_pos(self, pos_start=None, pos_end=None):
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+        return self
+
+    def set_context(self, context=None):
+        self.context = context
+        return self
+
+    def not_equal(self, other):
+        if self.value != other.value:
+            return Booleen('TRUE').set_context(self.context), None
+        else:
+            return Booleen('FALSE').set_context(self.context), None
+
+    def double_equal(self, other):
+        if self.value == other.value:
+            return Booleen('TRUE').set_context(self.context), None
+        else:
+            return Booleen('FALSE').set_context(self.context), None
+
+    def less_than(self, other):
+        if not (isinstance(other, Number)):
+            return None, RTError(
+                other.pos_start, other.pos_end,
+                "Comparsion of 'bool' and 'int/float'",
+                self.context
+            )
+        else:
+            if self.value < other.value:
+                return Booleen('TRUE').set_context(self.context), None
+            else:
+                return Booleen('FALSE').set_context(self.context), None
+
+    def less_equal_than(self, other):
+        pass
+
+    def greater_than(self, other):
+        pass
+
+    def greater_equal_than(self, other):
+        pass
+
+
+##########################
+# CONTEXT
+##########################
+
+class Context:
+    def __init__(self, display_name, parent=None, parent_entry_pos=None):
+        self.display_name = display_name
+        self.parent = parent
+        self.parent_entry_pos = parent_entry_pos
+
 
 ##########################
 # INTERPRETER
@@ -557,36 +660,47 @@ class Booleen:
 
 
 class Interpreter:
-    def visit(self, node):
+    def visit(self, node, context):
         method_name = f'visit_{type(node).__name__}'
         method = getattr(self, method_name, self.no_visit_method)
-        return method(node)
+        return method(node, context)
 
-    def no_visit_method(self, node):
+    def no_visit_method(self, node, context):
         raise Exception(f'No visit_{type(node).__name__} method defined')
 
-    def visit_BooleanNode(self, node):
-        return Booleen(node.tok.value).set_pos(node.pos_start, node.pos_end)
+    def visit_BooleanNode(self, node, context):
+        return RTResult().success(
+            Booleen(node.tok.value).set_context(context).set_pos(node.pos_start, node.pos_end))
 
-    def visit_BinOpNode(self, node):
-        left = self.visit(node.left_node)
-        right = self.visit(node.right_node)
+    def visit_NumberNode(self, node, context):
+        return RTResult().success(
+            Number(node.tok.value).set_context(context).set_pos(node.pos_start, node.pos_end))
+
+    def visit_BinOpNode(self, node, context):
+        res = RTResult()
+        left = res.register(self.visit(node.left_node, context))
+        if res.error:
+            return res
+        right = res.register(self.visit(node.right_node, context))
+        if res.error:
+            return res
 
         if node.op_tok.matches(TT_KEYWORD, 'AND'):
-            result = left.and_to(right)
+            result, error = left.and_to(right)
         elif node.op_tok.matches(TT_KEYWORD, 'OR'):
-            result = left.or_to(right)
+            result, error = left.or_to(right)
+        elif node.op_tok.type == TT_LT:
+            result, error = left.less_than(right)
 
-        return result.set_pos(node.pos_start, node.pos_end)
+        if error:
+            return res.failure(error)
+        else:
+            return res.success(result.set_pos(node.pos_start, node.pos_end))
 
-    def visit_UnaryOpNode(self, node):
-
-        boolean = self.visit(node.node)
-
+    def visit_UnaryOpNode(self, node, context):
+        boolean = self.visit(node.node, context)
         if node.op_tok.type == TT_NEG:
-
-            boolean = boolean.reverse()
-
+            boolean, error = boolean.reverse()
         return boolean.set_pos(node.pos_start, node.pos_end)
 
 ##########################
@@ -594,35 +708,36 @@ class Interpreter:
 ##########################
 
 
-# def run(fn, text):
-#     # Generate tokens
-#     lexer = Lexer(fn, text)
-#     tokens, error = lexer.make_tokens()
-#     print("tokenliste: " + str(tokens))
-#     if error:
-#         return None, error
-
-#     # Generate AST
-#     parser = Parser(tokens)
-#     ast = parser.parse()
-#     if ast.error:
-#         return None, ast.error
-
-#     # Run program
-#     interpreter = Interpreter()
-#     result = interpreter.visit(ast.node)
-
-#     return result, None
-
 def run(fn, text):
     # Generate tokens
     lexer = Lexer(fn, text)
     tokens, error = lexer.make_tokens()
+    print("tokenliste: " + str(tokens))
     if error:
         return None, error
 
     # Generate AST
     parser = Parser(tokens)
     ast = parser.parse()
+    if ast.error:
+        return None, ast.error
 
-    return ast.node, ast.error
+    # Run program
+    interpreter = Interpreter()
+    context = Context('<program>')
+    result = interpreter.visit(ast.node, context)
+
+    return result.value, result.error
+
+# def run(fn, text):
+#     # Generate tokens
+#     lexer = Lexer(fn, text)
+#     tokens, error = lexer.make_tokens()
+#     if error:
+#         return None, error
+
+#     # Generate AST
+#     parser = Parser(tokens)
+#     ast = parser.parse()
+
+#     return ast.node, ast.error

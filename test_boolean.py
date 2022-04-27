@@ -99,4 +99,7 @@ TT_BOOL = 'true'+'false'
 # print(luste[1].type)
 
 
-print(True and True == False or True)
+TT_TEST = '<'
+
+if '<' == TT_TEST:
+    print('sss')
