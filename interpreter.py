@@ -414,20 +414,57 @@ class Parser:
             ))
         return res
 
-    def factor(self):
+    def peek_prev(self):
+
+        return self.tokens[self.tok_idx - 1]
+
+
+# [( true or false ) and false)]
+# (true or false) and false
+# !!!!!true and false
+# 11231232123 > 2
+
+    def equality(self):
+        return self.bin_op(self.comparsion, (TT_EE, TT_NE))
+
+    def comparsion(self):
+        return self.bin_op(self.unary, (TT_LT, TT_LTE, TT_GT, TT_GTE))
+
+    def unary(self):
         res = ParseResult()
         tok = self.current_tok
 
         if tok.type == TT_NEG:
             res.register(self.advance())
-            factor = res.register(self.factor())
+            unary = res.register(self.unary())
             if res.error:
                 return res
-            return res.success(UnaryOpNode(tok, factor))
+            return res.success(UnaryOpNode(tok, unary))
 
-        elif tok.type == TT_KEYWORD and (tok.value == 'TRUE' or tok.value == 'FALSE'):
+        # elif tok.type in (TT_INT, TT_FLOAT, keyword.get('TRUE'), keyword.get('FALSE')):
+
+        primary = res.register(self.primary())
+        if res.error:
+            return res
+
+        return res.success(primary)
+
+    def primary(self):
+        res = ParseResult()
+        tok = self.current_tok
+
+        if tok.type == TT_KEYWORD and (tok.value == 'TRUE' or tok.value == 'FALSE'):
             res.register(self.advance())
             return res.success(BooleanNode(tok))
+
+        elif tok.type in (TT_INT, TT_FLOAT):
+            if self.peek_prev().type == '!':
+                return res.failure(InvalidSyntaxError(
+                    self.current_tok.pos_start, self.current_tok.pos_end,
+                    "Expected 'true' or 'false' after '!'"
+                ))
+            res.register(self.advance())
+            return res.success(NumberNode(tok))
 
         elif tok.type == TT_LK:
             res.register(self.advance())
@@ -442,25 +479,25 @@ class Parser:
                     self.current_tok.pos_start, self.current_tok.pos_end,
                     "Expected ')'"
                 ))
-# elif nach ! darf kein int kommen
+
         return res.failure(InvalidSyntaxError(
             tok.pos_start, tok.pos_end,
-            "Expected 'true' or 'false'"
+            "Expected 'true', 'false', 'INT' or 'FLOAT'"
         ))
 
     def term(self):
-        return self.bin_op(self.factor, keyword.get('AND'))
+        return self.bin_op(self.equality, keyword.get('AND'))
 
     def expr(self):
         return self.bin_op(self.term, keyword.get('OR'))
 
-    def bin_op(self, func, op):
+    def bin_op(self, func, ops):
         res = ParseResult()
         left = res.register(func())
         if res.error:
             return res
 
-        while self.current_tok.type == op:
+        while self.current_tok.type in ops:
             op_tok = self.current_tok
             res.register(self.advance())
             right = res.register(func())
@@ -551,22 +588,35 @@ class Interpreter:
 ##########################
 
 
+# def run(fn, text):
+#     # Generate tokens
+#     lexer = Lexer(fn, text)
+#     tokens, error = lexer.make_tokens()
+#     print("tokenliste: " + str(tokens))
+#     if error:
+#         return None, error
+
+#     # Generate AST
+#     parser = Parser(tokens)
+#     ast = parser.parse()
+#     if ast.error:
+#         return None, ast.error
+
+#     # Run program
+#     interpreter = Interpreter()
+#     result = interpreter.visit(ast.node)
+
+#     return result, None
+
 def run(fn, text):
     # Generate tokens
     lexer = Lexer(fn, text)
     tokens, error = lexer.make_tokens()
-    print("tokenliste: " + str(tokens))
     if error:
         return None, error
 
     # Generate AST
     parser = Parser(tokens)
     ast = parser.parse()
-    if ast.error:
-        return None, ast.error
 
-    # Run program
-    interpreter = Interpreter()
-    result = interpreter.visit(ast.node)
-
-    return result, None
+    return ast.node, ast.error

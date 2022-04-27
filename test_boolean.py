@@ -93,12 +93,10 @@ TT_BOOL = 'true'+'false'
 # text = "true and false"
 # expected_list = ['true', 'and', 'false']
 # for i in range(len(expected_list)):
-#     expected_list[i] = expected_list[i].upper()
+#     expected_list[i] = expected_list[i].upper()s
 
 # luste = [Token(TT_TRUE), Token(TT_AND), Token(TT_FALSE)]
 # print(luste[1].type)
 
 
-print(2 < 4 > 3)
-print(2 < 3 == 5 < 2)
-True == True
+print(True and True == False or True)

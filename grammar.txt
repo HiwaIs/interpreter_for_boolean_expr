@@ -19,12 +19,11 @@ number          -> INT|FLOAT
 
 
 
-expr            -> Term (or Term)*
-Term            -> comparsion (und comparsion)*
-Equality        -> == | !=
+expr            -> term (or term)*
+term            -> equality (und equality)*
+equality        -> comparsion (== | != comparsion)*
 comparsion      -> unary ((>=|<=|>|<) unary)*
 unary           -> "!" unary | primary
 primary         -> NUMBER | "true" | "false" | '(' expr ')'
 
 
-Test wegen Uni
