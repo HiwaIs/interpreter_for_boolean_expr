@@ -28,12 +28,16 @@ TT_EOF = 'EOF'
 
 
 keyword = HashMap()
-
 keyword.put('TRUE', TT_KEYWORD)
 keyword.put('FALSE', TT_KEYWORD)
 keyword.put('AND', TT_KEYWORD)
 keyword.put('OR', TT_KEYWORD)
 
+
+identifier = HashMap()
+identifier.put('a', 1)
+identifier.put('b', 2)
+identifier.put('c', 3)
 
 LETTERS = string.ascii_letters
 DIGITS = '0123456789'
@@ -415,20 +419,13 @@ class Parser:
         if not res.error and self.current_tok.type != TT_EOF:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                "Expected 'and' or 'or'"
+                "Expected 'and','or', logical comparsions or equality requests"
             ))
         return res
 
     def peek_prev(self):
 
         return self.tokens[self.tok_idx - 1]
-
-
-# [( true or false ) and false)]
-# (true or false) and false
-# !!!!!true and false
-# 11231232123 > 2
-
 
     def equality(self):
         return self.bin_op(self.comparsion, (TT_EE, TT_NE))
@@ -447,8 +444,6 @@ class Parser:
                 return res
             return res.success(UnaryOpNode(tok, unary))
 
-        # elif tok.type in (TT_INT, TT_FLOAT, keyword.get('TRUE'), keyword.get('FALSE')):
-
         primary = res.register(self.primary())
         if res.error:
             return res
@@ -464,20 +459,11 @@ class Parser:
             return res.success(BooleanNode(tok))
 
         elif tok.type in (TT_INT, TT_FLOAT):
-            if self.peek_prev().type == '!':
-                return res.failure(InvalidSyntaxError(
-                    self.current_tok.pos_start, self.current_tok.pos_end,
-                    "Expected 'true' or 'false' after '!'"
-                ))
+
             res.register(self.advance())
             return res.success(NumberNode(tok))
 
         elif tok.type == TT_LK:
-            if self.peek_prev().type == '!':
-                return res.failure(InvalidSyntaxError(
-                    self.current_tok.pos_start, self.current_tok.pos_end,
-                    "Expected 'true' or 'false' after '!'"
-                ))
             res.register(self.advance())
             expr = res.register(self.expr())
             if res.error:
@@ -551,6 +537,7 @@ class Booleen:
     def __init__(self, value):
         self.value = value
         self.set_pos()
+        self.set_context()
 
     def set_pos(self, pos_start=None, pos_end=None):
         self.pos_start = pos_start
@@ -778,10 +765,23 @@ class Interpreter:
             return res.success(result.set_pos(node.pos_start, node.pos_end))
 
     def visit_UnaryOpNode(self, node, context):
-        boolean = self.visit(node.node, context)
-        if node.op_tok.type == TT_NEG:
-            boolean, error = boolean.reverse()
-        return boolean.set_pos(node.pos_start, node.pos_end)
+        res = RTResult()
+        boolean = res.register(self.visit(node.node, context))
+        error = None
+        if isinstance(boolean, Booleen):
+            if node.op_tok.type == TT_NEG:
+                boolean, error = boolean.reverse()
+        else:
+            error = RTError(
+                boolean.pos_start, boolean.pos_end,
+                "Expected 'true' or 'false' after '!'",
+                context
+            )
+        if error:
+            return res.failure(error)
+        else:
+            return res.success(boolean.set_pos(node.pos_start, node.pos_end))
+
 
 ##########################
 # RUN
@@ -808,6 +808,9 @@ def run(fn, text):
     result = interpreter.visit(ast.node, context)
 
     return result.value, result.error
+
+
+# run method for testing the parser
 
 # def run(fn, text):
 #     # Generate tokens
