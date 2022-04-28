@@ -103,3 +103,16 @@ TT_TEST = '<'
 
 if '<' == TT_TEST:
     print('sss')
+
+
+class Hund:
+
+    def __init__(self):
+        self.inter = 3
+
+    def __repr__(self):
+        return str(type)
+
+
+hund = Hund()
+print(type(hund))

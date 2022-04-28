@@ -18,7 +18,6 @@ TT_RK = ')'
 TT_NEG = '!'
 TT_INT = 'INT'
 TT_FLOAT = 'FLOAT'
-TT_EQ = '='
 TT_EE = '=='
 TT_NE = '!='
 TT_LT = '<'
@@ -193,7 +192,10 @@ class Lexer:
                     return [], error
                 tokens.append(token)
             elif self.current_char == '=':
-                tokens.append(self.make_equals())
+                token, error = self.make_equals()
+                if error:
+                    return [], error
+                tokens.append(token)
             elif self.current_char == '<':
                 tokens.append(self.make_less_than())
             elif self.current_char == '>':
@@ -253,19 +255,21 @@ class Lexer:
             self.advance()
             return Token(TT_NE, pos_start=pos_start, pos_end=self.pos), None
 
-        self.advance()
+        # self.advance()
         return None, ExpectedCharError(pos_start, self.pos, "'=' (after '!')")
 
     def make_equals(self):
-        tok_type = TT_EQ
+        tok_type = None
         pos_start = self.pos.copy()
         self.advance()
 
         if self.current_char == '=':
             self.advance()
             tok_type = TT_EE
+            return Token(tok_type, pos_start=pos_start, pos_end=self.pos), None
 
-        return Token(tok_type, pos_start=pos_start, pos_end=self.pos)
+        else:
+            return None, ExpectedCharError(pos_start, self.pos, "'=' (after '=')")
 
     def make_less_than(self):
         tok_type = TT_LT
@@ -425,6 +429,7 @@ class Parser:
 # !!!!!true and false
 # 11231232123 > 2
 
+
     def equality(self):
         return self.bin_op(self.comparsion, (TT_EE, TT_NE))
 
@@ -578,19 +583,32 @@ class Booleen:
         return Booleen(self.value).set_context(self.context), None
 
     def not_equal(self, other):
-        if self.value != other.value:
-            return Booleen('TRUE').set_context(self.context), None
+        if not (isinstance(other, Booleen)):
+            return None, self.cant_compare_error(other)
         else:
-            return Booleen('FALSE').set_context(self.context), None
+            if self.value != other.value:
+                return Booleen('TRUE').set_context(self.context), None
+            else:
+                return Booleen('FALSE').set_context(self.context), None
 
     def double_equal(self, other):
-        if self.value == other.value:
-            return Booleen('TRUE').set_context(self.context), None
+        if not (isinstance(other, Booleen)):
+            return None, self.cant_compare_error(other)
         else:
-            return Booleen('FALSE').set_context(self.context), None
+            if self.value == other.value:
+                return Booleen('TRUE').set_context(self.context), None
+            else:
+                return Booleen('FALSE').set_context(self.context), None
 
     def __repr__(self):
         return str(self.value)
+
+    def cant_compare_error(self, other):
+        return RTError(
+            other.pos_start, other.pos_end,
+            "Comparsion of 'bool' and 'int/float'",
+            self.context
+        )
 
 
 class Number:
@@ -622,11 +640,7 @@ class Number:
 
     def less_than(self, other):
         if not (isinstance(other, Number)):
-            return None, RTError(
-                other.pos_start, other.pos_end,
-                "Comparsion of 'bool' and 'int/float'",
-                self.context
-            )
+            return None, self.cant_compare_error(other)
         else:
             if self.value < other.value:
                 return Booleen('TRUE').set_context(self.context), None
@@ -634,18 +648,64 @@ class Number:
                 return Booleen('FALSE').set_context(self.context), None
 
     def less_equal_than(self, other):
-        pass
+        if not (isinstance(other, Number)):
+            return None, self.cant_compare_error(other)
+        else:
+            if self.value <= other.value:
+                return Booleen('TRUE').set_context(self.context), None
+            else:
+                return Booleen('FALSE').set_context(self.context), None
 
     def greater_than(self, other):
-        pass
+        if not (isinstance(other, Number)):
+            return None, self.cant_compare_error(other)
+        else:
+            if self.value > other.value:
+                return Booleen('TRUE').set_context(self.context), None
+            else:
+                return Booleen('FALSE').set_context(self.context), None
 
     def greater_equal_than(self, other):
-        pass
+        if not (isinstance(other, Number)):
+            return None, self.cant_compare_error(other)
+        else:
+            if self.value >= other.value:
+                return Booleen('TRUE').set_context(self.context), None
+            else:
+                return Booleen('FALSE').set_context(self.context), None
 
+    def not_equal(self, other):
+        if not (isinstance(other, Number)):
+            return None, self.cant_compare_error(other)
+        else:
+            if self.value != other.value:
+                return Booleen('TRUE').set_context(self.context), None
+            else:
+                return Booleen('FALSE').set_context(self.context), None
+
+    def double_equal(self, other):
+        if not (isinstance(other, Number)):
+            return None, self.cant_compare_error(other)
+        else:
+            if self.value == other.value:
+                return Booleen('TRUE').set_context(self.context), None
+            else:
+                return Booleen('FALSE').set_context(self.context), None
+
+    def cant_compare_error(self, other):
+        return RTError(
+            other.pos_start, other.pos_end,
+            "Comparsion of 'int/float' and 'bool'",
+            self.context
+        )
+
+    def __repr__(self):
+        return str(self.value)
 
 ##########################
 # CONTEXT
 ##########################
+
 
 class Context:
     def __init__(self, display_name, parent=None, parent_entry_pos=None):
@@ -665,7 +725,7 @@ class Interpreter:
         method = getattr(self, method_name, self.no_visit_method)
         return method(node, context)
 
-    def no_visit_method(self, node, context):
+    def no_visit_method(self, node):
         raise Exception(f'No visit_{type(node).__name__} method defined')
 
     def visit_BooleanNode(self, node, context):
@@ -679,6 +739,7 @@ class Interpreter:
     def visit_BinOpNode(self, node, context):
         res = RTResult()
         left = res.register(self.visit(node.left_node, context))
+        type_of_left = type(left)
         if res.error:
             return res
         right = res.register(self.visit(node.right_node, context))
@@ -689,8 +750,27 @@ class Interpreter:
             result, error = left.and_to(right)
         elif node.op_tok.matches(TT_KEYWORD, 'OR'):
             result, error = left.or_to(right)
-        elif node.op_tok.type == TT_LT:
-            result, error = left.less_than(right)
+
+        elif isinstance(left, Number) and node.op_tok.type != TT_EE and node.op_tok.type != TT_NE:
+            if node.op_tok.type == TT_LT:
+                result, error = left.less_than(right)
+            elif node.op_tok.type == TT_LTE:
+                result, error = left.less_equal_than(right)
+            elif node.op_tok.type == TT_GT:
+                result, error = left.greater_than(right)
+            elif node.op_tok.type == TT_GTE:
+                result, error = left.greater_equal_than(right)
+
+        elif node.op_tok.type == TT_EE:
+            result, error = left.double_equal(right)
+        elif node.op_tok.type == TT_NE:
+            result, error = left.not_equal(right)
+        else:
+            error = RTError(
+                left.pos_start, left.pos_end,
+                f'The type "{type_of_left}" has no operation "{node.op_tok}"',
+                context
+            )
 
         if error:
             return res.failure(error)
