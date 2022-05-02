@@ -235,18 +235,15 @@ class Lexer:
 
         word = word.upper()
         if self.is_token_type(word):
-
             return Token(TT_KEYWORD, word, pos_start, self.pos), None
         else:
             if self.check_identifier(word):
-
-                return Token(TT_IDENTIFIER, word, pos_start, self.pos), None
+                return Token(TT_IDENTIFIER, identifier.get(word), pos_start, self.pos), None
             else:
                 return None, NonExistentIdentifierError(pos_start, self.pos, "'" + word + "'")
 
     def check_identifier(self, word):
         word_identifier = identifier.get(word)
-        print(word_identifier)
 
         if word_identifier:
             return True
@@ -393,6 +390,15 @@ class UnaryOpNode:
         return f'({self.op_tok}, {self.node})'
 
 
+# class VarNode:
+#     def __init__(self, var_name_tok, value_node):
+#         self.var_name_tok = var_name_tok
+#         self.value_node = value_node
+
+#         self.pos_start = self.var_name_tok.pos_start
+#         self.pos_end = self.var_name_tok.pos_end
+
+
 ##########################
 # PARSE RESULT
 ##########################
@@ -499,10 +505,14 @@ class Parser:
 
         elif tok.type == TT_IDENTIFIER:
             res.register(self.advance())
-            return res.success(NumberNode(tok))
+            if isinstance(tok.value, int):
+                return res.success(NumberNode(tok))
+            elif tok.value == 'TRUE' or tok.value == 'FALSE':
+                return res.success(BooleanNode(tok))
+
         return res.failure(InvalidSyntaxError(
             tok.pos_start, tok.pos_end,
-            "Expected 'true', 'false', 'INT' or 'FLOAT'"
+            "Expected 'true', 'false', 'identifier', 'INT' or 'FLOAT'"
         ))
 
     def term(self):
@@ -809,6 +819,19 @@ class Interpreter:
         else:
             return res.success(boolean.set_pos(node.pos_start, node.pos_end))
 
+    # def visit_VarNode(self, node, context):
+    #     res = RTResult()
+    #     var_name = node.var_name_tok.value
+    #     print(type(node.value_node))
+    #     value = res.register(self.visit(node.value_node, context))
+
+    #     if not value:
+    #         return res.failure(RTError(
+    #             node.pos_start, node.pos_end,
+    #             f"'{var_name}' is not defined",
+    #             context
+    #         ))
+    #     return res.success(value)
 
 ##########################
 # RUN
