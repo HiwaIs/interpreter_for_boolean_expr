@@ -102,26 +102,22 @@ TT_BOOL = 'true'+'false'
 # print(luste[1].type)
 
 
-TT_TEST = '<'
+# TT_TEST = '<'
 
-if '<' == TT_TEST:
-    print('sss')
+# if '<' == TT_TEST:
+#     print('sss')
 
 
 class Hund:
 
-    def __init__(self):
+    def __init__(self, name: str, wert: float):
         self.inter = 3
-
-    def __repr__(self):
-        return str(type)
-
-
-hasmap = HashMap()
-hasmap.put('a', 1)
-
-hund = Hund()
-print(type(hund))
+        self.name = name
+        self.wert = wert
+    # def __repr__(self):
+    #     return str(type)
 
 
-print(hasmap.get('a'))
+hund = Hund(2, 33.333)
+print(hund)
+print(type(hund.wert))

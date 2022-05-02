@@ -338,6 +338,7 @@ class Lexer:
         else:
             return False
 
+
 ##########################
 # NODES
 ##########################
@@ -379,12 +380,16 @@ class BinOpNode:
 
 
 class UnaryOpNode:
-    def __init__(self, op_tok, node: BooleanNode):
+    def __init__(self, op_tok, node):
         self.op_tok = op_tok
         self.node = node
 
         self.pos_start = self.op_tok.pos_start
         self.pos_end = self.node.pos_end
+
+        print("Unary")
+
+        print(type(node))
 
     def __repr__(self):
         return f'({self.op_tok}, {self.node})'
@@ -445,7 +450,7 @@ class Parser:
         if not res.error and self.current_tok.type != TT_EOF:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                "Expected 'and','or', logical comparsions or equality requests"
+                "Expected 'and', 'or', logical comparsions or equality requests"
             ))
         return res
 
@@ -810,7 +815,7 @@ class Interpreter:
                 boolean, error = boolean.reverse()
         else:
             error = RTError(
-                boolean.pos_start, boolean.pos_end,
+                node.pos_start, node.pos_end,
                 "Expected 'true' or 'false' after '!'",
                 context
             )
@@ -861,6 +866,7 @@ def run(fn, text):
 
 
 # run method for testing the parser
+
 
 # def run(fn, text):
 #     # Generate tokens
