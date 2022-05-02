@@ -3,6 +3,9 @@
 # from operator import truediv
 
 
+from hashmap import HashMap
+
+
 TT_BOOL = 'true'+'false'
 # LETTERS = ['a','n','d', 'o', 'r', 't', 'e', 'u', 'f', 'l', 's']
 
@@ -114,5 +117,11 @@ class Hund:
         return str(type)
 
 
+hasmap = HashMap()
+hasmap.put('a', 1)
+
 hund = Hund()
 print(type(hund))
+
+
+print(hasmap.get('a'))

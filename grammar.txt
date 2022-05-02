@@ -24,6 +24,7 @@ term            -> equality (und equality)*
 equality        -> comparsion (== | != comparsion)*
 comparsion      -> unary ((>=|<=|>|<) unary)*
 unary           -> "!" unary | primary
-primary         -> NUMBER | "true" | "false" | '(' expr ')'
+primary         -> NUMBER | "true" | "false" | '(' expr ')' | IDENTIFIER
+
 
 

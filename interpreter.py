@@ -3,7 +3,6 @@
 # POSSIBLE TOKENS
 ##########################
 
-from urllib.request import HTTPBasicAuthHandler
 from hashmap import HashMap
 from string_with_arrows import *
 from keyword import *
@@ -35,9 +34,9 @@ keyword.put('OR', TT_KEYWORD)
 
 
 identifier = HashMap()
-identifier.put('a', 1)
-identifier.put('b', 2)
-identifier.put('c', 3)
+identifier.put('A', 1)
+identifier.put('B', 2)
+identifier.put('C', 3)
 
 LETTERS = string.ascii_letters
 DIGITS = '0123456789'
@@ -67,6 +66,11 @@ class Error:
 class IllegalCharError(Error):
     def __init__(self, pos_start, pos_end, details):
         super().__init__(pos_start, pos_end, 'Illegal Character', details)
+
+
+class NonExistentIdentifierError(Error):
+    def __init__(self, pos_start, pos_end, details):
+        super().__init__(pos_start, pos_end, 'Nonexistent Identifier', details)
 
 
 class ExpectedCharError(Error):
@@ -206,8 +210,10 @@ class Lexer:
                 tokens.append(self.make_greater_than())
             else:
                 if self.current_char in LETTERS:
-                    tokens.append(self.make_word())
-
+                    token, error = self.make_word()
+                    if error:
+                        return [], error
+                    tokens.append(token)
                 elif self.current_char in DIGITS:
                     tokens.append(self.make_number())
                 else:
@@ -229,9 +235,23 @@ class Lexer:
 
         word = word.upper()
         if self.is_token_type(word):
-            return Token(TT_KEYWORD, word, pos_start, self.pos)
+
+            return Token(TT_KEYWORD, word, pos_start, self.pos), None
         else:
-            return Token(TT_IDENTIFIER, word, pos_start, self.pos)
+            if self.check_identifier(word):
+
+                return Token(TT_IDENTIFIER, word, pos_start, self.pos), None
+            else:
+                return None, NonExistentIdentifierError(pos_start, self.pos, "'" + word + "'")
+
+    def check_identifier(self, word):
+        word_identifier = identifier.get(word)
+        print(word_identifier)
+
+        if word_identifier:
+            return True
+        else:
+            return False
 
     def make_number(self):
         num_str = ''
@@ -477,6 +497,9 @@ class Parser:
                     "Expected ')'"
                 ))
 
+        elif tok.type == TT_IDENTIFIER:
+            res.register(self.advance())
+            return res.success(NumberNode(tok))
         return res.failure(InvalidSyntaxError(
             tok.pos_start, tok.pos_end,
             "Expected 'true', 'false', 'INT' or 'FLOAT'"
@@ -553,6 +576,8 @@ class Booleen:
             if self.value == other.value:
                 return Booleen(self.value).set_context(self.context), None
             return Booleen('FALSE').set_context(self.context), None
+        else:
+            return None, self.cant_compare_error(other)
 
     def or_to(self, other):
         if isinstance(other, Booleen):
@@ -560,6 +585,8 @@ class Booleen:
                 return Booleen(self.value).set_context(self.context), None
             else:
                 return Booleen('TRUE').set_context(self.context), None
+        else:
+            return None, self.cant_compare_error(other)
 
     def reverse(self):
         if self.value == 'TRUE':
