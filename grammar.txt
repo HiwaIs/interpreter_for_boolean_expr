@@ -17,13 +17,15 @@ number          -> INT|FLOAT
                 -> "("   exp  ")"
 
 
+FUN name(a) -> a + b
 
 
 expr            -> term (or term)*
 term            -> equality (und equality)*
 equality        -> comparsion (== | != comparsion)*
 comparsion      -> unary ((>=|<=|>|<) unary)*
-unary           -> "!" unary | primary
+unary           -> "!" unary | call
+call            -> primary (LPAREN (expr (COMMA expr)*)? RPAREN)?
 primary         -> NUMBER | "true" | "false" | '(' expr ')' | IDENTIFIER
 
 

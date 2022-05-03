@@ -26,6 +26,10 @@ TT_GTE = '>='
 TT_EOF = 'EOF'
 
 
+def isEven(arg):
+    return arg % 2 == 0
+
+
 keyword = HashMap()
 keyword.put('TRUE', TT_KEYWORD)
 keyword.put('FALSE', TT_KEYWORD)
@@ -37,6 +41,7 @@ identifier = HashMap()
 identifier.put('A', 1)
 identifier.put('B', 2)
 identifier.put('C', 3)
+identifier.put('ISEVEN', isEven)
 
 LETTERS = string.ascii_letters
 DIGITS = '0123456789'
@@ -387,12 +392,21 @@ class UnaryOpNode:
         self.pos_start = self.op_tok.pos_start
         self.pos_end = self.node.pos_end
 
-        print("Unary")
-
-        print(type(node))
-
     def __repr__(self):
         return f'({self.op_tok}, {self.node})'
+
+
+class CallNode:
+    def __init__(self, node_to_call, arg_nodes):
+        self.node_to_call = node_to_call
+        self.arg_nodes = arg_nodes
+
+        self.pos_start = self.node_to_call.pos_start
+
+        if len(self.arg_nodes) > 0:
+            self.pos_end = self.arg_nodes[len(self.arg_nodes) - 1].pos_end
+        else:
+            self.pos_end = self.node_to_call.pos_end
 
 
 # class VarNode:
@@ -479,6 +493,37 @@ class Parser:
         if res.error:
             return res
 
+        return res.success(primary)
+
+    def call(self):
+        res = ParseResult()
+        primary = res.register(self.primary())
+        if res.error:
+            return res
+
+        if self.current_tok.type == TT_LK:
+            res.register(self.advance())
+            arg_nodes = []
+
+            if self.current_tok.type == TT_RK:
+                res.register(self.advance())
+
+            else:
+                arg_nodes.append(res.register(self.primary()))
+                if res.error:
+                    return res.failure(InvalidSyntaxError(
+                        self.current_tok.pos_start, self.current_tok.pos_end,
+                        "Excepted ')', int, float, identifier or '('"
+                    ))
+
+                if self.current_tok.type != TT_RK:
+                    return res.failure(InvalidSyntaxError(
+                        self.current_tok.pos_start, self.current_tok.pos_end,
+                        f"Expected ')'"
+                    ))
+
+                res.register(self.advance())
+            return res.success(CallNode(primary, arg_nodes))
         return res.success(primary)
 
     def primary(self):
@@ -730,6 +775,62 @@ class Number:
 
     def __repr__(self):
         return str(self.value)
+
+
+class Function:
+    def __init__(self, name, body_node, arg_names):
+        self.name = name or "<anonymous>"
+        self.body_node = body_node
+        self.arg_names = arg_names
+        self.set_pos()
+        self.set_context()
+
+    def set_pos(self, pos_start=None, pos_end=None):
+        self.pos_start = pos_start
+        self.pos_end = pos_end
+        return self
+
+    def set_context(self, context=None):
+        self.context = context
+        return self
+
+    def execute(self, args):
+        res = RTResult()
+        interpreter = Interpreter()
+        new_context = Context(self.name, self.context, self.pos_start)
+
+        if len(args) > len(self.arg_names):
+            return res.failure(RTError(
+                self.pos_start, self.pos_end,
+                f"{len(args) - len(self.arg_names)} too many args passed into '{self.name}'",
+                self.context
+            ))
+
+        if len(args) < len(self.arg_names):
+            return res.failure(RTError(
+                self.pos_start, self.pos_end,
+                f"{len(self.arg_names) - len(args)} too few args passed into '{self.name}'",
+                self.context
+            ))
+
+        for i in range(len(args)):
+            arg_name = self.arg_names[i]
+            arg_value = args[i]
+            arg_value.set_context(new_context)
+
+        value = res.register(interpreter.visit(self.body_node, new_context))
+        if res.error:
+            return res
+        return res.success(value)
+
+    def copy(self):
+        copy = Function(self.name, self.body_node, self.arg_names)
+        copy.set_context(self.context)
+        copy.set_pos(self.pos_start, self.pos_end)
+        return copy
+
+    def __repr__(self):
+        return f"<function {self.name}>"
 
 ##########################
 # CONTEXT

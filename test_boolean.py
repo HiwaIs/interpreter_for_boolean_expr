@@ -108,16 +108,23 @@ TT_BOOL = 'true'+'false'
 #     print('sss')
 
 
-class Hund:
+# class Hund:
 
-    def __init__(self, name: str, wert: float):
-        self.inter = 3
-        self.name = name
-        self.wert = wert
-    # def __repr__(self):
-    #     return str(type)
+#     def __init__(self, name: str, wert: float):
+#         self.inter = 3
+#         self.name = name
+#         self.wert = wert
+#     # def __repr__(self):
+#     #     return str(type)
 
 
-hund = Hund(2, 33.333)
-print(hund)
-print(type(hund.wert))
+# hund = Hund(2, 33.333)
+# print(hund)
+# print(type(hund.wert))
+
+
+def isEven():
+    return True
+
+
+print(not isEven())
