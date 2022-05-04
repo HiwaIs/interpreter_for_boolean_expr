@@ -4,6 +4,7 @@
 
 
 from hashmap import HashMap
+import types
 
 
 TT_BOOL = 'true'+'false'
@@ -122,9 +123,27 @@ TT_BOOL = 'true'+'false'
 # print(hund)
 # print(type(hund.wert))
 
+hashmap = HashMap()
+
 
 def isEven():
     return True
 
 
-print(not isEven())
+hashmap.put('ISEVEN', isEven)
+
+x = hashmap.get("ISEVEN")
+if x == isEven:
+    print('zea')
+
+g = isEven
+
+print(x())
+
+print(type(isEven))
+
+
+if isinstance(g, types.FunctionType):
+    print('isso')
+
+print(type(g))

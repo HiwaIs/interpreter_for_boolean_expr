@@ -7,6 +7,7 @@ from hashmap import HashMap
 from string_with_arrows import *
 from keyword import *
 import string
+import types
 
 
 # Token Types
@@ -27,7 +28,8 @@ TT_EOF = 'EOF'
 
 
 def isEven(arg):
-    return arg % 2 == 0
+    print('sss')
+    return (arg % 2) == 0
 
 
 keyword = HashMap()
@@ -403,19 +405,19 @@ class CallNode:
 
         self.pos_start = self.node_to_call.pos_start
 
-        if len(self.arg_nodes) > 0:
-            self.pos_end = self.arg_nodes[len(self.arg_nodes) - 1].pos_end
+        if self.arg_nodes:
+            self.pos_end = self.arg_nodes.pos_end
         else:
             self.pos_end = self.node_to_call.pos_end
 
 
-# class VarNode:
-#     def __init__(self, var_name_tok, value_node):
-#         self.var_name_tok = var_name_tok
-#         self.value_node = value_node
+class VarNode:
+    def __init__(self, var_name_tok):
+        self.var_name_tok = var_name_tok
+        self.var_name_tok_value = var_name_tok.value
 
-#         self.pos_start = self.var_name_tok.pos_start
-#         self.pos_end = self.var_name_tok.pos_end
+        self.pos_start = self.var_name_tok.pos_start
+        self.pos_end = self.var_name_tok.pos_end
 
 
 ##########################
@@ -469,7 +471,6 @@ class Parser:
         return res
 
     def peek_prev(self):
-
         return self.tokens[self.tok_idx - 1]
 
     def equality(self):
@@ -489,11 +490,11 @@ class Parser:
                 return res
             return res.success(UnaryOpNode(tok, unary))
 
-        primary = res.register(self.primary())
+        call = res.register(self.call())
         if res.error:
             return res
 
-        return res.success(primary)
+        return res.success(call)
 
     def call(self):
         res = ParseResult()
@@ -503,13 +504,13 @@ class Parser:
 
         if self.current_tok.type == TT_LK:
             res.register(self.advance())
-            arg_nodes = []
+            arg_nodes = None
 
             if self.current_tok.type == TT_RK:
                 res.register(self.advance())
 
             else:
-                arg_nodes.append(res.register(self.primary()))
+                arg_nodes = res.register(self.primary())
                 if res.error:
                     return res.failure(InvalidSyntaxError(
                         self.current_tok.pos_start, self.current_tok.pos_end,
@@ -559,6 +560,8 @@ class Parser:
                 return res.success(NumberNode(tok))
             elif tok.value == 'TRUE' or tok.value == 'FALSE':
                 return res.success(BooleanNode(tok))
+            elif isinstance(tok.value, types.FunctionType):
+                return res.success(tok)
 
         return res.failure(InvalidSyntaxError(
             tok.pos_start, tok.pos_end,
@@ -777,60 +780,61 @@ class Number:
         return str(self.value)
 
 
-class Function:
-    def __init__(self, name, body_node, arg_names):
-        self.name = name or "<anonymous>"
-        self.body_node = body_node
-        self.arg_names = arg_names
-        self.set_pos()
-        self.set_context()
+# class Function:
+#     def __init__(self, name, body_node, arg_names):
+#         self.name = name or "<anonymous>"
+#         self.body_node = body_node
+#         self.arg_names = arg_names
+#         self.set_pos()
+#         self.set_context()
 
-    def set_pos(self, pos_start=None, pos_end=None):
-        self.pos_start = pos_start
-        self.pos_end = pos_end
-        return self
+#     def set_pos(self, pos_start=None, pos_end=None):
+#         self.pos_start = pos_start
+#         self.pos_end = pos_end
+#         return self
 
-    def set_context(self, context=None):
-        self.context = context
-        return self
+#     def set_context(self, context=None):
+#         self.context = context
+#         return self
 
-    def execute(self, args):
-        res = RTResult()
-        interpreter = Interpreter()
-        new_context = Context(self.name, self.context, self.pos_start)
+#     def execute(self, args):
+#         res = RTResult()
+#         interpreter = Interpreter()
+#         new_context = Context(self.name, self.context, self.pos_start)
 
-        if len(args) > len(self.arg_names):
-            return res.failure(RTError(
-                self.pos_start, self.pos_end,
-                f"{len(args) - len(self.arg_names)} too many args passed into '{self.name}'",
-                self.context
-            ))
+#         if len(args) > len(self.arg_names):
+#             return res.failure(RTError(
+#                 self.pos_start, self.pos_end,
+#                 f"{len(args) - len(self.arg_names)} too many args passed into '{self.name}'",
+#                 self.context
+#             ))
 
-        if len(args) < len(self.arg_names):
-            return res.failure(RTError(
-                self.pos_start, self.pos_end,
-                f"{len(self.arg_names) - len(args)} too few args passed into '{self.name}'",
-                self.context
-            ))
+#         if len(args) < len(self.arg_names):
+#             return res.failure(RTError(
+#                 self.pos_start, self.pos_end,
+#                 f"{len(self.arg_names) - len(args)} too few args passed into '{self.name}'",
+#                 self.context
+#             ))
 
-        for i in range(len(args)):
-            arg_name = self.arg_names[i]
-            arg_value = args[i]
-            arg_value.set_context(new_context)
+#         for i in range(len(args)):
+#             arg_name = self.arg_names[i]
+#             arg_value = args[i]
+#             arg_value.set_context(new_context)
+#             new_context.identifier.put(arg_name, arg_value)
 
-        value = res.register(interpreter.visit(self.body_node, new_context))
-        if res.error:
-            return res
-        return res.success(value)
+#         value = isEven(args)
+#         if res.error:
+#             return res
+#         return res.success(value)
 
-    def copy(self):
-        copy = Function(self.name, self.body_node, self.arg_names)
-        copy.set_context(self.context)
-        copy.set_pos(self.pos_start, self.pos_end)
-        return copy
+#     def copy(self):
+#         copy = Function(self.name, self.body_node, self.arg_names)
+#         copy.set_context(self.context)
+#         copy.set_pos(self.pos_start, self.pos_end)
+#         return copy
 
-    def __repr__(self):
-        return f"<function {self.name}>"
+#     def __repr__(self):
+#         return f"<function {self.name}>"
 
 ##########################
 # CONTEXT
@@ -842,6 +846,7 @@ class Context:
         self.display_name = display_name
         self.parent = parent
         self.parent_entry_pos = parent_entry_pos
+        self.hashmap = None
 
 
 ##########################
@@ -925,18 +930,47 @@ class Interpreter:
         else:
             return res.success(boolean.set_pos(node.pos_start, node.pos_end))
 
+    def visit_CallNode(self, node, context):
+        res = RTResult()
+        arg = None
+        error = None
+
+        value_to_call = node.node_to_call.value
+
+        arg = res.register(self.visit(node.arg_nodes, context))
+        if not isinstance(arg, Number):
+            error = RTError(
+                arg.pos_start, arg.pos_end,
+                "Method only works with arguments from type 'Number'",
+                context
+            )
+        if isinstance(arg, Number):
+            arg = int(arg.value)
+            value_to_call = value_to_call(arg)
+
+        if value_to_call == True:
+            value_to_call = Booleen('TRUE').set_context(context)
+        elif value_to_call == False:
+            value_to_call = Booleen('FALSE').set_context(context)
+
+        if error:
+            return res.failure(error)
+        return res.success(value_to_call.set_pos(node.pos_start, node.pos_end))
+
     # def visit_VarNode(self, node, context):
     #     res = RTResult()
-    #     var_name = node.var_name_tok.value
-    #     print(type(node.value_node))
-    #     value = res.register(self.visit(node.value_node, context))
+    #     value = node.var_name_tok.value
+    #     print(value)
+    #     # value = context.identifier.get(var_name)
+    #     # print(value)
 
     #     if not value:
     #         return res.failure(RTError(
     #             node.pos_start, node.pos_end,
-    #             f"'{var_name}' is not defined",
+    #             f"'{value}' is not defined",
     #             context
     #         ))
+    #     value = value.copy().set_pos(node.pos_start, node.pos_end)
     #     return res.success(value)
 
 ##########################
@@ -961,6 +995,7 @@ def run(fn, text):
     # Run program
     interpreter = Interpreter()
     context = Context('<program>')
+    context.identifier = identifier
     result = interpreter.visit(ast.node, context)
 
     return result.value, result.error
