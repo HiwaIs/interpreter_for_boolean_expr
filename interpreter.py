@@ -28,8 +28,18 @@ TT_EOF = 'EOF'
 
 
 def isEven(arg):
-    print('sss')
     return (arg % 2) == 0
+
+
+def isNotEven(arg):
+    return (arg % 2) != 0
+
+
+def reverse(arg):
+    if arg == 'TRUE':
+        arg = True
+    else:
+        arg = False
 
 
 keyword = HashMap()
@@ -44,6 +54,7 @@ identifier.put('A', 1)
 identifier.put('B', 2)
 identifier.put('C', 3)
 identifier.put('ISEVEN', isEven)
+identifier.put('ISNOTEVEN', isNotEven)
 
 LETTERS = string.ascii_letters
 DIGITS = '0123456789'
@@ -780,62 +791,6 @@ class Number:
         return str(self.value)
 
 
-# class Function:
-#     def __init__(self, name, body_node, arg_names):
-#         self.name = name or "<anonymous>"
-#         self.body_node = body_node
-#         self.arg_names = arg_names
-#         self.set_pos()
-#         self.set_context()
-
-#     def set_pos(self, pos_start=None, pos_end=None):
-#         self.pos_start = pos_start
-#         self.pos_end = pos_end
-#         return self
-
-#     def set_context(self, context=None):
-#         self.context = context
-#         return self
-
-#     def execute(self, args):
-#         res = RTResult()
-#         interpreter = Interpreter()
-#         new_context = Context(self.name, self.context, self.pos_start)
-
-#         if len(args) > len(self.arg_names):
-#             return res.failure(RTError(
-#                 self.pos_start, self.pos_end,
-#                 f"{len(args) - len(self.arg_names)} too many args passed into '{self.name}'",
-#                 self.context
-#             ))
-
-#         if len(args) < len(self.arg_names):
-#             return res.failure(RTError(
-#                 self.pos_start, self.pos_end,
-#                 f"{len(self.arg_names) - len(args)} too few args passed into '{self.name}'",
-#                 self.context
-#             ))
-
-#         for i in range(len(args)):
-#             arg_name = self.arg_names[i]
-#             arg_value = args[i]
-#             arg_value.set_context(new_context)
-#             new_context.identifier.put(arg_name, arg_value)
-
-#         value = isEven(args)
-#         if res.error:
-#             return res
-#         return res.success(value)
-
-#     def copy(self):
-#         copy = Function(self.name, self.body_node, self.arg_names)
-#         copy.set_context(self.context)
-#         copy.set_pos(self.pos_start, self.pos_end)
-#         return copy
-
-#     def __repr__(self):
-#         return f"<function {self.name}>"
-
 ##########################
 # CONTEXT
 ##########################
@@ -944,6 +899,7 @@ class Interpreter:
                 "Method only works with arguments from type 'Number'",
                 context
             )
+
         if isinstance(arg, Number):
             arg = int(arg.value)
             value_to_call = value_to_call(arg)
@@ -1002,7 +958,6 @@ def run(fn, text):
 
 
 # run method for testing the parser
-
 
 # def run(fn, text):
 #     # Generate tokens
