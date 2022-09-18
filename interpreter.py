@@ -48,7 +48,6 @@ keyword.put('FALSE', TT_KEYWORD)
 keyword.put('AND', TT_KEYWORD)
 keyword.put('OR', TT_KEYWORD)
 
-
 identifier = HashMap()
 identifier.put('A', 1)
 identifier.put('B', 2)
@@ -60,10 +59,10 @@ LETTERS = string.ascii_letters
 DIGITS = '0123456789'
 LETTERS_AND_DIGITS = LETTERS + DIGITS
 
-
 ##########################
 # ERRORS
 ##########################
+
 
 class Error:
     def __init__(self, pos_start, pos_end, error_name, details):
@@ -130,7 +129,6 @@ class RTError(Error):
 ##########################
 # POSITION
 ##########################
-
 
 class Position:
     def __init__(self, idx, ln, col, fn, ftxt):
@@ -255,10 +253,8 @@ class Lexer:
         if self.is_token_type(word):
             return Token(TT_KEYWORD, word, pos_start, self.pos), None
         else:
-            if self.check_identifier(word):
-                return Token(TT_IDENTIFIER, identifier.get(word), pos_start, self.pos), None
-            else:
-                return None, NonExistentIdentifierError(pos_start, self.pos, "'" + word + "'")
+            print("ich mach das")
+            return Token(TT_IDENTIFIER, identifier.get(word), pos_start, self.pos), None
 
     def check_identifier(self, word):
         word_identifier = identifier.get(word)
@@ -356,7 +352,6 @@ class Lexer:
         else:
             return False
 
-
 ##########################
 # NODES
 ##########################
@@ -430,10 +425,10 @@ class VarNode:
         self.pos_start = self.var_name_tok.pos_start
         self.pos_end = self.var_name_tok.pos_end
 
-
 ##########################
 # PARSE RESULT
 ##########################
+
 
 class ParseResult:
     def __init__(self):
@@ -455,10 +450,10 @@ class ParseResult:
         self.error = error
         return self
 
-
 ##########################
 # PARSER
 ##########################
+
 
 class Parser:
     def __init__(self, tokens):
@@ -566,6 +561,11 @@ class Parser:
                 ))
 
         elif tok.type == TT_IDENTIFIER:
+            print("ich bin hier im")
+            if tok.value == None:
+                print("ist none")
+                return res.failure(NonExistentIdentifierError(
+                    tok.pos_start, tok.pos_end, "Unknown Identifier"))
             res.register(self.advance())
             if isinstance(tok.value, int):
                 return res.success(NumberNode(tok))
@@ -600,7 +600,6 @@ class Parser:
             left = BinOpNode(left, op_tok, right)
 
         return res.success(left)
-
 
 ##########################
 # VALUES
@@ -790,7 +789,6 @@ class Number:
     def __repr__(self):
         return str(self.value)
 
-
 ##########################
 # CONTEXT
 ##########################
@@ -807,7 +805,6 @@ class Context:
 ##########################
 # INTERPRETER
 ##########################
-
 
 class Interpreter:
     def visit(self, node, context):
@@ -912,22 +909,6 @@ class Interpreter:
         if error:
             return res.failure(error)
         return res.success(value_to_call.set_pos(node.pos_start, node.pos_end))
-
-    # def visit_VarNode(self, node, context):
-    #     res = RTResult()
-    #     value = node.var_name_tok.value
-    #     print(value)
-    #     # value = context.identifier.get(var_name)
-    #     # print(value)
-
-    #     if not value:
-    #         return res.failure(RTError(
-    #             node.pos_start, node.pos_end,
-    #             f"'{value}' is not defined",
-    #             context
-    #         ))
-    #     value = value.copy().set_pos(node.pos_start, node.pos_end)
-    #     return res.success(value)
 
 ##########################
 # RUN

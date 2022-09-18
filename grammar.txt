@@ -21,12 +21,13 @@ FUN name(a) -> a + b
 
 
 expr            -> term (or term)*
-term            -> equality (und equality)*
+term            -> equality (and equality)*
 equality        -> comparsion (== | != comparsion)*
 comparsion      -> unary ((>=|<=|>|<) unary)*
 unary           -> "!" unary | call
 call            -> primary (LPAREN (expr (COMMA expr)*)? RPAREN)?
-primary         -> NUMBER | "true" | "false" | '(' expr ')' | IDENTIFIER
+primary         -> number | "true" | "false" | '(' expr ')' | IDENTIFIER
+number          -> 1|2|3|4|5|6|7|8|9|0
 
 
 
